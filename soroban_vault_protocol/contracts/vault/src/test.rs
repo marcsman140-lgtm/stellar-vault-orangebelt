@@ -1,6 +1,6 @@
 #![cfg(test)]
 use super::*;
-use soroban_sdk::testutils::{Address as _, Events};
+use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{Env, Address};
 use reward_token_contract::{RewardTokenContract, RewardTokenContractClient};
 
@@ -61,7 +61,7 @@ fn test_vault_multi_user_staking_and_accumulation() {
 
 #[test]
 fn test_vault_withdraw_flow_and_events() {
-    let (env, vault, _, _, user) = setup_test();
+    let (_, vault, _, _, user) = setup_test();
 
     vault.deposit(&user, &3000_i128, &3001_u32);
     assert_eq!(vault.get_total(), 3000);
@@ -79,4 +79,19 @@ fn test_vault_overdraw_protection() {
     vault.deposit(&user, &500_i128, &4001_u32);
     // Attempting to withdraw more than deposited must panic
     vault.withdraw(&user, &1000_i128, &4002_u32);
+}
+
+#[test]
+#[should_panic(expected = "Deposit amount must be positive")]
+fn test_vault_zero_deposit_rejection() {
+    let (_, vault, _, _, user) = setup_test();
+    vault.deposit(&user, &0_i128, &5001_u32);
+}
+
+#[test]
+#[should_panic(expected = "Withdraw amount must be positive")]
+fn test_vault_zero_withdraw_rejection() {
+    let (_, vault, _, _, user) = setup_test();
+    vault.deposit(&user, &500_i128, &5002_u32);
+    vault.withdraw(&user, &0_i128, &5003_u32);
 }
